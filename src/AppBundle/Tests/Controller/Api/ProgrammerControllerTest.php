@@ -26,7 +26,7 @@ class ProgrammerControllerTest extends ApiTestCase
         ]);
 
         $this->assertEquals(201, $response->getStatusCode());
-        $this->assertEquals('/api/programmers/ObjectOrienter', $response->getHeader('Location'));
+        $this->assertStringEndsWith('/api/programmers/ObjectOrienter', $response->getHeader('Location'));
         $finishedData = json_decode($response->getBody(), true);
         $this->assertArrayHasKey('nickname', $finishedData);
         $this->assertEquals('ObjectOrienter', $data['nickname']);
@@ -38,15 +38,42 @@ class ProgrammerControllerTest extends ApiTestCase
             'nickname' => 'UnitTester',
             'avatarNumber' => 3,
         ));
+
         $response = $this->client->get('/api/programmers/UnitTester');
         $this->assertEquals(200, $response->getStatusCode());
-        $data = $response->json();
-        $this->assertEquals(array(
+        $this->asserter()->assertResponsePropertiesExist($response, array(
             'nickname',
             'avatarNumber',
             'tagLine',
             'powerLevel',
             'user',
-        ), array_keys($data));
+        ));
+        $this->asserter()->assertResponsePropertyEquals($response, 'nickname', 'UnitTester');
+//        $data = $response->json();
+//        $this->assertEquals(array(
+//            'nickname',
+//            'avatarNumber',
+//            'tagLine',
+//            'powerLevel',
+//            'user',
+//        ), array_keys($data));
+    }
+
+    public function testGETProgrammersCollection()
+    {
+        $this->createProgrammer(array(
+            'nickname' => 'UnitTester',
+            'avatarNumber' => 3,
+        ));
+        $this->createProgrammer(array(
+            'nickname' => 'CowboyCoder',
+            'avatarNumber' => 1,
+        ));
+
+        $response = $this->client->get('/api/programmers');
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->asserter()->assertResponsePropertyIsArray($response, 'programmers');
+        $this->asserter()->assertResponsePropertyCount($response, 'programmers', 2);
+        $this->asserter()->assertResponsePropertyEquals($response, 'programmers[0].nickname', 'UnitTester');
     }
 }
