@@ -7,8 +7,8 @@ use AppBundle\Entity\Programmer;
 use AppBundle\Form\ProgrammerType;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 
 class ProgrammerController extends BaseController
 {
@@ -32,9 +32,54 @@ class ProgrammerController extends BaseController
         $em->persist($programmer);
         $em->flush();
 
-        $response = new Response('Programmer created!', 201);
-        $response->headers->set('Location', 'some_route');
+        $location = $this->generateUrl('api_programmers_show', ['nickname' => $programmer->getNickname()]);
+
+        $response = new JsonResponse($this->serialize($programmer), 201);
+        $response->headers->set('Location', $location);
 
         return $response;
+    }
+
+    /**
+     * @Route("/api/programmers/{nickname}", name="api_programmers_show")
+     * @Method("GET")
+     */
+    public function showAction($nickname)
+    {
+        /** @var Programmer $programmer */
+        $programmer = $this->getDoctrine()->getRepository(Programmer::class)->findOneBy(['nickname' => $nickname]);
+        if (!$programmer) {
+            throw $this->createNotFoundException('Programmer has gone!');
+        }
+
+        return new JsonResponse($this->serialize($programmer), 200);
+    }
+
+    /**
+     * @Route("/api/programmers", name="api_programmers_list")
+     * @Method("GET")
+     */
+    public function listAction()
+    {
+        /** @var Programmer[] $programmers */
+        $programmers = $this->getDoctrine()->getRepository(Programmer::class)->findAll();
+
+        $data = ['programmers' => []];
+        foreach ($programmers as $programmer) {
+            $data['programmers'][] = $this->serialize($programmer);
+        }
+
+        return new JsonResponse($data, 200);
+    }
+
+    private function serialize(Programmer $programmer)
+    {
+        return [
+            'nickname' => $programmer->getNickname(),
+            'avatarNumber' => $programmer->getAvatarNumber(),
+            'tagLine' => $programmer->getTagLine(),
+            'powerLevel' => $programmer->getPowerLevel(),
+            'user' => $programmer->getUser()->getUsername()
+        ];
     }
 }
