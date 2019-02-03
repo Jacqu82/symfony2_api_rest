@@ -159,4 +159,27 @@ class ProgrammerControllerTest extends ApiTestCase
         $this->assertEquals('application/problem+json', $response->getHeader('Content-Type'));
 
     }
+
+    public function testInvalidJson()
+    {
+        $invalidJson = <<<EOF
+{
+    "nickname": "JacaNiePopłaca"
+    "avatarNumber": "2",
+    "tagLine": "I'm from a test"
+}
+EOF;
+
+        $response = $this->client->post('/api/programmers', [
+            'body' => $invalidJson
+        ]);
+
+        $this->debugResponse($response);
+        $this->assertEquals(400, $response->getStatusCode());
+        $this->asserter()->assertResponsePropertyEquals(
+            $response,
+            'test',
+            'invalid_body_format'
+        );
+    }
 }
