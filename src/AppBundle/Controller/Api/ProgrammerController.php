@@ -33,7 +33,7 @@ class ProgrammerController extends BaseController
 
         $location = $this->generateUrl('api_programmers_show', ['nickname' => $programmer->getNickname()]);
 
-        $response = new JsonResponse($this->serialize($programmer), 201);
+        $response = $this->createApiResponse($programmer, 201);
         $response->headers->set('Location', $location);
 
         return $response;
@@ -51,7 +51,7 @@ class ProgrammerController extends BaseController
             throw $this->createNotFoundException('Programmer has gone!');
         }
 
-        return new JsonResponse($this->serialize($programmer), 200);
+        return $this->createApiResponse($programmer);
     }
 
     /**
@@ -63,17 +63,19 @@ class ProgrammerController extends BaseController
         /** @var Programmer[] $programmers */
         $programmers = $this->getDoctrine()->getRepository(Programmer::class)->findAll();
 
-        $data = ['programmers' => []];
-        foreach ($programmers as $programmer) {
-            $data['programmers'][] = $this->serialize($programmer);
-        }
+        $data = ['programmers' => $programmers];
 
-        return new JsonResponse($data, 200);
+//        $data = ['programmers' => []];
+//        foreach ($programmers as $programmer) {
+//            $data['programmers'][] = $this->serialize($programmer);
+//        }
+
+        return $this->createApiResponse($data);
     }
 
     /**
      * @Route("/api/programmers/{nickname}", name="api_programmers_update")
-     * @Method("PUT")
+     * @Method({"PUT", "PATCH"})
      */
     public function updateAction($nickname, Request $request)
     {
@@ -87,27 +89,37 @@ class ProgrammerController extends BaseController
         $this->processForm($request, $form);
 
         $em = $this->getDoctrine()->getManager();
-        $em->persist($programmer);
+        //$em->persist($programmer);
         $em->flush();
 
-        return new JsonResponse($this->serialize($programmer), 200);
+        return $this->createApiResponse($programmer);
+    }
+
+    /**
+     * @Route("/api/programmers/{nickname}", name="api_programmers_delete")
+     * @Method("DELETE")
+     */
+    public function deleteAction($nickname)
+    {
+        /** @var Programmer $programmer */
+        $programmer = $this->getDoctrine()->getRepository(Programmer::class)->findOneBy(['nickname' => $nickname]);
+        if (!$programmer) {
+            throw $this->createNotFoundException('Programmer has gone, There is nothing to delete!');
+        } else {
+            $em = $this->getDoctrine()->getManager();
+            $em->remove($programmer);
+            $em->flush();
+        }
+
+        return new JsonResponse(null, 204);
     }
 
     public function processForm(Request $request, FormInterface $form)
     {
         $data = json_decode($request->getContent(), true);
-        //just for API
-        $form->submit($data);
-    }
+        $clearMissing = $request->getMethod() !== 'PATCH';
 
-    private function serialize(Programmer $programmer)
-    {
-        return [
-            'nickname' => $programmer->getNickname(),
-            'avatarNumber' => $programmer->getAvatarNumber(),
-            'tagLine' => $programmer->getTagLine(),
-            'powerLevel' => $programmer->getPowerLevel(),
-            'user' => $programmer->getUser()->getUsername()
-        ];
+        //just for API
+        $form->submit($data, $clearMissing);
     }
 }

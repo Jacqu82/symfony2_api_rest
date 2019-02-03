@@ -2,15 +2,17 @@
 
 namespace AppBundle\Controller;
 
-use AppBundle\Repository\ProgrammerRepository;
-use AppBundle\Repository\UserRepository;
-use AppBundle\Repository\ProjectRepository;
-use AppBundle\Repository\BattleRepository;
-use AppBundle\Repository\ApiTokenRepository;
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
-use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
-use Symfony\Component\HttpFoundation\Request;
 use AppBundle\Entity\User;
+use AppBundle\Repository\ApiTokenRepository;
+use AppBundle\Repository\BattleRepository;
+use AppBundle\Repository\ProgrammerRepository;
+use AppBundle\Repository\ProjectRepository;
+use AppBundle\Repository\UserRepository;
+use JMS\Serializer\SerializationContext;
+use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
 
 abstract class BaseController extends Controller
 {
@@ -108,5 +110,29 @@ abstract class BaseController extends Controller
     {
         return $this->getDoctrine()
             ->getRepository('AppBundle:ApiToken');
+    }
+
+    protected function createApiResponse($data, $statusCode = 200)
+    {
+        $json = $this->serialize($data);
+
+        return new Response($json, $statusCode, [
+            'Content-Type' => 'application/json'
+        ]);
+    }
+
+    protected function serialize($data)
+    {
+        $context = new SerializationContext();
+        $context->setSerializeNull(true);
+
+        return $this->container->get('jms_serializer')->serialize($data, 'json', $context);
+//        return [
+//            'nickname' => $programmer->getNickname(),
+//            'avatarNumber' => $programmer->getAvatarNumber(),
+//            'tagLine' => $programmer->getTagLine(),
+//            'powerLevel' => $programmer->getPowerLevel(),
+//            'user' => $programmer->getUser()->getUsername()
+//        ];
     }
 }

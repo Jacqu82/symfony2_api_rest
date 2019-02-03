@@ -46,9 +46,10 @@ class ProgrammerControllerTest extends ApiTestCase
             'avatarNumber',
             'tagLine',
             'powerLevel',
-            'user',
+//            'user',
         ));
         $this->asserter()->assertResponsePropertyEquals($response, 'nickname', 'UnitTester');
+        $this->debugResponse($response);
 //        $data = $response->json();
 //        $this->assertEquals(array(
 //            'nickname',
@@ -97,5 +98,36 @@ class ProgrammerControllerTest extends ApiTestCase
         $this->assertEquals(200, $response->getStatusCode());
         $this->asserter()->assertResponsePropertyEquals($response, 'avatarNumber', 2);
         $this->asserter()->assertResponsePropertyEquals($response, 'nickname', 'CowboyCoder');
+    }
+
+    public function testDELETEProgrammer()
+    {
+        $this->createProgrammer(array(
+            'nickname' => 'UnitTester',
+            'avatarNumber' => 3,
+        ));
+
+        $response = $this->client->delete('/api/programmers/UnitTester');
+        $this->assertEquals(204, $response->getStatusCode());
+    }
+
+    public function testPATCHProgrammer()
+    {
+        $this->createProgrammer(array(
+            'nickname' => 'CowboyCoder',
+            'avatarNumber' => 1,
+            'tagLine' => 'foo'
+        ));
+
+        $data = [
+            'tagLine' => 'bar'
+        ];
+
+        $response = $this->client->patch('/api/programmers/CowboyCoder', [
+            'body' => json_encode($data)
+        ]);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->asserter()->assertResponsePropertyEquals($response, 'tagLine', 'bar');
+        $this->asserter()->assertResponsePropertyEquals($response, 'avatarNumber', 1);
     }
 }
