@@ -49,7 +49,7 @@ class ProgrammerControllerTest extends ApiTestCase
 //            'user',
         ));
         $this->asserter()->assertResponsePropertyEquals($response, 'nickname', 'UnitTester');
-        $this->debugResponse($response);
+        //$this->debugResponse($response);
 //        $data = $response->json();
 //        $this->assertEquals(array(
 //            'nickname',
@@ -129,5 +129,34 @@ class ProgrammerControllerTest extends ApiTestCase
         $this->assertEquals(200, $response->getStatusCode());
         $this->asserter()->assertResponsePropertyEquals($response, 'tagLine', 'bar');
         $this->asserter()->assertResponsePropertyEquals($response, 'avatarNumber', 1);
+    }
+
+    public function testValidationErrors()
+    {
+        $data = [
+            'avatarNumber' => 3,
+            'tagLine' => 'a test dev!'
+        ];
+
+        $response = $this->client->post('/api/programmers', [
+            'body' => json_encode($data)
+        ]);
+
+        $this->assertEquals(400, $response->getStatusCode());
+        $this->asserter()->assertResponsePropertiesExist($response, [
+            'type',
+            'title',
+            'errors'
+        ]);
+        $this->asserter()->assertResponsePropertyExists($response, 'errors.nickname');
+        $this->asserter()->assertResponsePropertyEquals(
+            $response,
+            'errors.nickname[0]',
+            'Please enter a clever nickname'
+        );
+        $this->asserter()->assertResponsePropertyDoesNotExist($response, 'errors.avatarNumber');
+        $this->debugResponse($response);
+        $this->assertEquals('application/problem+json', $response->getHeader('Content-Type'));
+
     }
 }

@@ -36,7 +36,8 @@ class ProgrammerType extends AbstractType
     {
         $resolver->setDefaults([
             'data_class' => Programmer::class,
-            'is_edit' => false
+            'is_edit' => false,
+            'csrf_protection' => false
         ]);
     }
 

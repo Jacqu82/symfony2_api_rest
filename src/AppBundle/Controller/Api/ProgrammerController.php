@@ -2,6 +2,7 @@
 
 namespace AppBundle\Controller\Api;
 
+use AppBundle\Api\ApiProblem;
 use AppBundle\Controller\BaseController;
 use AppBundle\Entity\Programmer;
 use AppBundle\Form\ProgrammerType;
@@ -24,6 +25,11 @@ class ProgrammerController extends BaseController
 
         $form = $this->createForm(new ProgrammerType(), $programmer);
         $this->processForm($request, $form);
+
+        //validation for API! :)
+        if (!$form->isValid()) {
+            return $this->createValidationErrorResponse($form);
+        }
 
         $programmer->setUser($this->findUserByUsername('weaverryan'));
 
@@ -88,6 +94,11 @@ class ProgrammerController extends BaseController
         $form = $this->createForm(new UpdateProgrammerType(), $programmer);
         $this->processForm($request, $form);
 
+        //validation for API! :)
+        if (!$form->isValid()) {
+            return $this->createValidationErrorResponse($form);
+        }
+
         $em = $this->getDoctrine()->getManager();
         //$em->persist($programmer);
         $em->flush();
@@ -121,5 +132,40 @@ class ProgrammerController extends BaseController
 
         //just for API
         $form->submit($data, $clearMissing);
+    }
+
+    private function getErrorsFromForm(FormInterface $form)
+    {
+        $errors = array();
+        foreach ($form->getErrors() as $error) {
+            $errors[] = $error->getMessage();
+        }
+        foreach ($form->all() as $childForm) {
+            if ($childForm instanceof FormInterface) {
+                if ($childErrors = $this->getErrorsFromForm($childForm)) {
+                    $errors[$childForm->getName()] = $childErrors;
+                }
+            }
+        }
+        return $errors;
+    }
+
+    private function createValidationErrorResponse(FormInterface $form): JsonResponse
+    {
+        //for dump function - doesn't work anyway in here
+        //header('Content-Type: cli');
+        //var_dump((string) $form->getErrors(true, false));die;
+
+        $errors = $this->getErrorsFromForm($form);
+        $apiProblem = new ApiProblem(
+            400,
+            ApiProblem::TYPE_VALIDATION_ERROR
+        );
+        $apiProblem->set('errors', $errors);
+
+        $response = new JsonResponse($apiProblem->toArray(), $apiProblem->getStatusCode());
+        $response->headers->set('Content-Type', 'application/problem+json');
+
+        return $response;
     }
 }
