@@ -155,7 +155,7 @@ class ProgrammerControllerTest extends ApiTestCase
             'Please enter a clever nickname'
         );
         $this->asserter()->assertResponsePropertyDoesNotExist($response, 'errors.avatarNumber');
-        $this->debugResponse($response);
+        //$this->debugResponse($response);
         $this->assertEquals('application/problem+json', $response->getHeader('Content-Type'));
 
     }
@@ -176,10 +176,33 @@ EOF;
 
         //$this->debugResponse($response);
         $this->assertEquals(400, $response->getStatusCode());
-        $this->asserter()->assertResponsePropertyEquals(
+        $this->asserter()->assertResponsePropertyContains(
             $response,
             'type',
             'invalid_body_format'
+        );
+    }
+
+    public function test404Exception()
+    {
+        //type == what happened?
+        $response = $this->client->get('/api/programmers/fake');
+        $this->assertEquals(404, $response->getStatusCode());
+        $this->assertEquals('application/problem+json', $response->getHeader('Content-Type'));
+        $this->asserter()->assertResponsePropertyEquals(
+            $response,
+            'type',
+            'about:blank'
+        );
+        $this->asserter()->assertResponsePropertyEquals(
+            $response,
+            'title',
+            'Not Found'
+        );
+        $this->asserter()->assertResponsePropertyEquals(
+            $response,
+            'detail',
+            'No programmer found for username fake!'
         );
     }
 }

@@ -55,7 +55,7 @@ class ProgrammerController extends BaseController
         /** @var Programmer $programmer */
         $programmer = $this->getDoctrine()->getRepository(Programmer::class)->findOneBy(['nickname' => $nickname]);
         if (!$programmer) {
-            throw $this->createNotFoundException('Programmer has gone!');
+            throw $this->createNotFoundException(sprintf('No programmer found for username %s!', $nickname));
         }
 
         return $this->createApiResponse($programmer);
