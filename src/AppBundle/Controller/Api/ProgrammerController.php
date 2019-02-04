@@ -29,7 +29,7 @@ class ProgrammerController extends BaseController
 
         //validation for API! :)
         if (!$form->isValid()) {
-            return $this->createValidationErrorResponse($form);
+            $this->throwApiProblemValidationException($form);
         }
 
         $programmer->setUser($this->findUserByUsername('weaverryan'));
@@ -97,7 +97,7 @@ class ProgrammerController extends BaseController
 
         //validation for API! :)
         if (!$form->isValid()) {
-            return $this->createValidationErrorResponse($form);
+            $this->throwApiProblemValidationException($form);
         }
 
         $em = $this->getDoctrine()->getManager();
@@ -159,7 +159,7 @@ class ProgrammerController extends BaseController
         return $errors;
     }
 
-    private function createValidationErrorResponse(FormInterface $form): JsonResponse
+    private function throwApiProblemValidationException(FormInterface $form): JsonResponse
     {
         //for dump function - doesn't work anyway in here
         //header('Content-Type: cli');
@@ -172,9 +172,9 @@ class ProgrammerController extends BaseController
         );
         $apiProblem->set('errors', $errors);
 
-        $response = new JsonResponse($apiProblem->toArray(), $apiProblem->getStatusCode());
-        $response->headers->set('Content-Type', 'application/problem+json');
+        throw new ApiProblemException($apiProblem);
 
-        return $response;
+//        $response = new JsonResponse($apiProblem->toArray(), $apiProblem->getStatusCode());
+//        $response->headers->set('Content-Type', 'application/problem+json');
     }
 }
