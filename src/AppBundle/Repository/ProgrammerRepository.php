@@ -2,12 +2,18 @@
 
 namespace AppBundle\Repository;
 
-use Doctrine\ORM\EntityRepository;
-use AppBundle\Entity\User;
 use AppBundle\Entity\Programmer;
+use AppBundle\Entity\User;
+use Doctrine\ORM\EntityRepository;
+use Doctrine\ORM\QueryBuilder;
 
 class ProgrammerRepository extends EntityRepository
 {
+    public function findAllQueryBuilder(): QueryBuilder
+    {
+        return $this->createQueryBuilder('p');
+    }
+
     /**
      * @param User $user
      * @return Programmer[]

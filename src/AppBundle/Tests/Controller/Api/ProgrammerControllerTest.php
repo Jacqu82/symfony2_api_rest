@@ -73,9 +73,41 @@ class ProgrammerControllerTest extends ApiTestCase
 
         $response = $this->client->get('/api/programmers');
         $this->assertEquals(200, $response->getStatusCode());
-        $this->asserter()->assertResponsePropertyIsArray($response, 'programmers');
-        $this->asserter()->assertResponsePropertyCount($response, 'programmers', 2);
-        $this->asserter()->assertResponsePropertyEquals($response, 'programmers[0].nickname', 'UnitTester');
+        $this->asserter()->assertResponsePropertyIsArray($response, 'items');
+        $this->asserter()->assertResponsePropertyCount($response, 'items', 2);
+        $this->asserter()->assertResponsePropertyEquals($response, 'items[0].nickname', 'UnitTester');
+    }
+
+    public function testGETProgrammersCollectionPaginated()
+    {
+        for ($i = 0; $i < 25; $i++) {
+            $this->createProgrammer(array(
+                'nickname' => 'Programmer' . $i,
+                'avatarNumber' => mt_rand(1, 5),
+            ));
+        }
+
+        $response = $this->client->get('/api/programmers');
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->asserter()->assertResponsePropertyEquals($response, 'items[5].nickname', 'Programmer5');
+        $this->asserter()->assertResponsePropertyEquals($response, 'count', 10);
+        $this->asserter()->assertResponsePropertyEquals($response, 'total', 25);
+        $this->asserter()->assertResponsePropertyExists($response, '_links.next');
+
+        $nextUrl = $this->asserter()->readResponseProperty($response, '_links.next');
+
+        $response = $this->client->get($nextUrl);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->asserter()->assertResponsePropertyEquals($response, 'items[5].nickname', 'Programmer15');
+        $this->asserter()->assertResponsePropertyEquals($response, 'count', 10);
+
+        $lastUrl = $this->asserter()->readResponseProperty($response, '_links.last');
+
+        $response = $this->client->get($lastUrl);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->asserter()->assertResponsePropertyEquals($response, 'items[4].nickname', 'Programmer24');
+        $this->asserter()->assertResponsePropertyDoesNotExist($response, 'items[5].nickname');
+        $this->asserter()->assertResponsePropertyEquals($response, 'count', 5);
     }
 
     public function testPUTProgrammer()
@@ -205,4 +237,5 @@ EOF;
             'No programmer found for username fake!'
         );
     }
+
 }
