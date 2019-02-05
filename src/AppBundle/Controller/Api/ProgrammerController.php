@@ -8,9 +8,6 @@ use AppBundle\Controller\BaseController;
 use AppBundle\Entity\Programmer;
 use AppBundle\Form\ProgrammerType;
 use AppBundle\Form\UpdateProgrammerType;
-use AppBundle\Pagination\PaginatedCollection;
-use Pagerfanta\Adapter\DoctrineORMAdapter;
-use Pagerfanta\Pagerfanta;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Component\Form\FormInterface;
@@ -70,45 +67,13 @@ class ProgrammerController extends BaseController
      */
     public function listAction(Request $request)
     {
-        $page = $request->query->get('page', 1);
+        $filter = $request->query->get('filter');
 
         $qb = $this->getDoctrine()->getRepository(Programmer::class)
-            ->findAllQueryBuilder();
+            ->findAllQueryBuilder($filter);
 
-        $adapter = new DoctrineORMAdapter($qb);
-        $pagerfanta = new Pagerfanta($adapter);
-        $pagerfanta->setMaxPerPage(10);
-        $pagerfanta->setCurrentPage($page);
-
-        $programmers = [];
-        foreach ($pagerfanta->getCurrentPageResults() as $programmer) {
-            $programmers[] = $programmer;
-        }
-
-        $paginatedCollection = new PaginatedCollection(
-            $programmers,
-            $pagerfanta->getNbResults()
-        );
-
-        $route = 'api_programmers_list';
-        $routeParams = [];
-        $createLinkUrl = function ($targetPage) use ($route, $routeParams) {
-            return $this->generateUrl($route, array_merge(
-                $routeParams,
-                ['page' => $targetPage]
-            ));
-        };
-
-        $paginatedCollection->addLink('self', $createLinkUrl($page));
-        $paginatedCollection->addLink('first', $createLinkUrl(1));
-        $paginatedCollection->addLink('last', $createLinkUrl($pagerfanta->getNbPages()));
-
-        if ($pagerfanta->hasNextPage()) {
-            $paginatedCollection->addLink('next', $createLinkUrl($pagerfanta->getNextPage()));
-        }
-        if ($pagerfanta->hasPreviousPage()) {
-            $paginatedCollection->addLink('prev', $createLinkUrl($pagerfanta->getPreviousPage()));
-        }
+        $paginatedCollection = $this->container->get('pagination_factory')
+            ->createCollection($qb, $request, 'api_programmers_list');
 
 //        $data = ['programmers' => []];
 //        foreach ($programmers as $programmer) {

@@ -9,9 +9,16 @@ use Doctrine\ORM\QueryBuilder;
 
 class ProgrammerRepository extends EntityRepository
 {
-    public function findAllQueryBuilder(): QueryBuilder
+    public function findAllQueryBuilder($filter = ''): QueryBuilder
     {
-        return $this->createQueryBuilder('p');
+        $qb = $this->createQueryBuilder('p');
+        if ($filter) {
+            $qb
+                ->andWhere('p.nickname LIKE :filter OR p.tagLine LIKE :filter')
+                ->setParameter('filter', '%' . $filter . '%');
+        }
+
+        return $qb;
     }
 
     /**

@@ -80,14 +80,19 @@ class ProgrammerControllerTest extends ApiTestCase
 
     public function testGETProgrammersCollectionPaginated()
     {
+        $this->createProgrammer([
+            'nickname' => 'willnotmatch',
+            'avatarNumber' => 3
+        ]);
+
         for ($i = 0; $i < 25; $i++) {
             $this->createProgrammer(array(
                 'nickname' => 'Programmer' . $i,
-                'avatarNumber' => mt_rand(1, 5),
+                'avatarNumber' => mt_rand(1, 5)
             ));
         }
 
-        $response = $this->client->get('/api/programmers');
+        $response = $this->client->get('/api/programmers?filter=programmer');
         $this->assertEquals(200, $response->getStatusCode());
         $this->asserter()->assertResponsePropertyEquals($response, 'items[5].nickname', 'Programmer5');
         $this->asserter()->assertResponsePropertyEquals($response, 'count', 10);
