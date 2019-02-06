@@ -10,4 +10,7 @@
 /composer.phar
 /vendor/
 /web/bundles/
+/web/css/
+/web/img/
+/web/js/
 .idea/
